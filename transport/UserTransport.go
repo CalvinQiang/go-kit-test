@@ -5,14 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	goMux "github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 )
 
 func DecodeUserRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	// 限定参数来源
-	if r.URL.Query().Get("uid") != "" {
-		uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
+	vars := goMux.Vars(r) // 使用vars方法，提取路由上的参数
+	if result, ok := vars["uid"]; ok {
+		uid, _ := strconv.Atoi(result)
 		return endpoint.UserRequest{Uid: uid}, nil
 	}
 	return nil, errors.New("参数错误")
