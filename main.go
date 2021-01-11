@@ -4,9 +4,15 @@ import (
 	"com.calvin.service/endpoint"
 	"com.calvin.service/service"
 	"com.calvin.service/transport"
+	"com.calvin.service/utils"
+	"fmt"
 	httpTransport "github.com/go-kit/kit/transport/http"
 	goMux "github.com/gorilla/mux"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -21,6 +27,27 @@ func main() {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"status":"ok"}`))
 	})
-	// 监听端口，并且使用serverHandler处理随之而来的请求
-	_ = http.ListenAndServe(":8080", r)
+
+	errChan := make(chan error)
+	go (func() {
+		// 注册服务
+		utils.RegService()
+		// 监听端口，并且使用serverHandler处理随之而来的请求
+		err := http.ListenAndServe(":8080", r)
+		if err != nil {
+			log.Println(err)
+			errChan <- err
+		}
+	})()
+
+	go (func() {
+		singC := make(chan os.Signal)
+		signal.Notify(singC, syscall.SIGINT, syscall.SIGTERM)
+		errChan <- fmt.Errorf("%s", <-singC)
+	})()
+
+	// 等待信号量
+	getErr := <-errChan
+	utils.UnRegService()
+	log.Println(getErr)
 }
