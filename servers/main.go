@@ -35,6 +35,7 @@ func main() {
 		// 监听端口，并且使用serverHandler处理随之而来的请求
 		err := http.ListenAndServe(":8080", r)
 		if err != nil {
+			log.Println("启动出错，退出")
 			log.Println(err)
 			errChan <- err
 		}
@@ -49,5 +50,6 @@ func main() {
 	// 等待信号量
 	getErr := <-errChan
 	utils.UnRegService()
+	log.Println("接收到信号量，退出")
 	log.Println(getErr)
 }

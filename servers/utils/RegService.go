@@ -8,10 +8,10 @@ import (
 var client *consulapi.Client
 
 // 服务器节点地址
-const nodeAddress = "192.168.0.110"
+const nodeAddress = "192.168.0.105"
 
 // 注册中心地址
-const rcAddress = "192.168.0.110"
+const rcAddress = "192.168.0.105"
 
 func init() {
 	config := consulapi.DefaultConfig()
