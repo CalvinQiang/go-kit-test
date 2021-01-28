@@ -2,7 +2,9 @@ package utils
 
 import (
 	consulapi "github.com/hashicorp/consul/api"
+	uuid "github.com/satori/go.uuid"
 	"log"
+	"strconv"
 )
 
 var client *consulapi.Client
@@ -12,6 +14,12 @@ const nodeAddress = "192.168.0.105"
 
 // 注册中心地址
 const rcAddress = "192.168.0.105"
+
+// 服务名称
+var ServiceName string
+
+// 服务端口号
+var ServicePort int
 
 func init() {
 	config := consulapi.DefaultConfig()
@@ -23,18 +31,27 @@ func init() {
 		log.Fatal(err)
 	}
 	client = newClient
+	if ServiceName == "" {
+		ServiceName = "userservice"
+	}
 }
+
+func SetServiceNameAndPort(serviceName string, servicePort int) {
+	ServiceName = serviceName
+	ServicePort = servicePort
+}
+
 func RegService() {
 	reg := consulapi.AgentServiceRegistration{}
-	reg.ID = "userservice"
-	reg.Name = "userservice"
+	reg.ID = uuid.NewV1().String()
+	reg.Name = ServiceName
 	reg.Address = nodeAddress
-	reg.Port = 8080
+	reg.Port = ServicePort
 	reg.Tags = []string{"primary"}
 
 	check := consulapi.AgentServiceCheck{}
 	check.Interval = "5s"
-	check.HTTP = "http://" + nodeAddress + ":8080/health"
+	check.HTTP = "http://" + nodeAddress + ":" + strconv.Itoa(ServicePort) + "/health"
 
 	reg.Check = &check
 
@@ -46,5 +63,5 @@ func RegService() {
 }
 
 func UnRegService() {
-	_ = client.Agent().ServiceDeregister("userservice")
+	_ = client.Agent().ServiceDeregister(ServiceName)
 }
