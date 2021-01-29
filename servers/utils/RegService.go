@@ -10,10 +10,10 @@ import (
 var client *consulapi.Client
 
 // 服务器节点地址
-const nodeAddress = "192.168.0.105"
+const nodeAddress = "192.168.0.102"
 
 // 注册中心地址
-const rcAddress = "192.168.0.105"
+const rcAddress = "192.168.0.102"
 
 // 服务名称
 var ServiceName string

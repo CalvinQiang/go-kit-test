@@ -6,20 +6,21 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-kit/kit/endpoint"
-
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/consul"
+	"github.com/go-kit/kit/sd/lb"
 	httpTransport "github.com/go-kit/kit/transport/http"
 	consulapi "github.com/hashicorp/consul/api"
 	"io"
 	"net/url"
 	"os"
+	"time"
 )
 
 func main() {
 	config := consulapi.DefaultConfig()
-	config.Address = "192.168.0.105:8500" // 注册中心地址
+	config.Address = "192.168.0.102:8500" // 注册中心地址
 	apiClient, _ := consulapi.NewClient(config)
 	client := consul.NewClient(apiClient)
 
@@ -36,20 +37,19 @@ func main() {
 			return httpTransport.NewClient("GET", tart, transport.GetUserInfoRequest, transport.GetUserInfoResponse).Endpoint(), nil, nil
 		}
 		endpointer := sd.NewEndpointer(instancer, f, logger)
+		// 轮询获取服务
+		robin := lb.NewRoundRobin(endpointer)
+		for {
+			time.Sleep(1 * time.Second)
+			getUserInfo, _ := robin.Endpoint()
+			ctx := context.Background()
+			res, err := getUserInfo(ctx, endpointClient.UserRequest{Uid: 101})
+			if err != nil {
+				os.Exit(1)
+			}
 
-		endpoints, _ := endpointer.Endpoints()
-		// 获取多个服务实例
-		fmt.Println(len(endpoints))
-		getUserInfo := endpoints[0]
-
-		ctx := context.Background()
-		res, err := getUserInfo(ctx, endpointClient.UserRequest{Uid: 101})
-		if err != nil {
-			os.Exit(1)
+			userInfo := res.(endpointClient.UserResponse)
+			fmt.Println(userInfo)
 		}
-
-		userInfo := res.(endpointClient.UserResponse)
-		fmt.Println(userInfo)
-
 	}
 }
