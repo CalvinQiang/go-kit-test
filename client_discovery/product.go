@@ -38,7 +38,7 @@ func main() {
 		}
 		endpointer := sd.NewEndpointer(instancer, f, logger)
 		// 轮询获取服务
-		robin := lb.NewRoundRobin(endpointer)
+		robin := lb.NewRandom(endpointer, int64(time.Now().Nanosecond()))
 		for {
 			time.Sleep(1 * time.Second)
 			getUserInfo, _ := robin.Endpoint()
