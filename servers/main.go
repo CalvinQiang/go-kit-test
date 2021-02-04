@@ -9,6 +9,7 @@ import (
 	"fmt"
 	httpTransport "github.com/go-kit/kit/transport/http"
 	goMux "github.com/gorilla/mux"
+	"golang.org/x/time/rate"
 	"log"
 	"net/http"
 	"os"
@@ -27,10 +28,14 @@ func main() {
 		log.Fatal("未指定服务的名字")
 	}
 	user := service.UserService{}
-	endPoint := endpoint.GetUserEndPoint(user)
+	limiter := rate.NewLimiter(1, 2)
+	endPoint := endpoint.RateLimit(limiter)(endpoint.GetUserEndPoint(user))
 
+	options := []httpTransport.ServerOption{
+		httpTransport.ServerErrorEncoder(transport.MyErrorEncoder),
+	}
 	// construct a new server， implements http.handler and wrap the endpoint
-	serverHandler := httpTransport.NewServer(endPoint, transport.DecodeUserRequest, transport.EncodeUserResponse)
+	serverHandler := httpTransport.NewServer(endPoint, transport.DecodeUserRequest, transport.EncodeUserResponse, options...)
 	r := goMux.NewRouter()                                                    // 这里我们引入了第三方路由
 	r.Methods("GET", "DELETE").Path(`/user/{uid:\d+}`).Handler(serverHandler) // 设置path格式的路由
 	r.Methods("GET").Path("/health").HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

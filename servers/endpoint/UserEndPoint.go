@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-kit/kit/endpoint"
+	"golang.org/x/time/rate"
 	"strconv"
 )
 
@@ -16,6 +17,17 @@ type UserRequest struct {
 
 type UserResponse struct {
 	Result string `json:"result"`
+}
+
+func RateLimit(limit *rate.Limiter) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			if !limit.Allow() {
+				return nil, errors.New("too many requests")
+			}
+			return next(ctx, request)
+		}
+	}
 }
 
 func GetUserEndPoint(userService service.IUserService) endpoint.Endpoint {

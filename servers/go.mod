@@ -5,6 +5,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul v1.9.1 // indirect
 	github.com/hashicorp/consul/api v1.8.1
+	github.com/hashicorp/vic v1.5.1-0.20190403131502-bbfe86ec9443
 	github.com/satori/go.uuid v1.2.0
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 )

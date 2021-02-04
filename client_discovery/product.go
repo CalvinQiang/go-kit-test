@@ -20,7 +20,7 @@ import (
 
 func main() {
 	config := consulapi.DefaultConfig()
-	config.Address = "192.168.0.102:8500" // 注册中心地址
+	config.Address = "192.168.0.106:8500" // 注册中心地址
 	apiClient, _ := consulapi.NewClient(config)
 	client := consul.NewClient(apiClient)
 
@@ -40,11 +40,12 @@ func main() {
 		// 轮询获取服务
 		robin := lb.NewRandom(endpointer, int64(time.Now().Nanosecond()))
 		for {
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 			getUserInfo, _ := robin.Endpoint()
 			ctx := context.Background()
 			res, err := getUserInfo(ctx, endpointClient.UserRequest{Uid: 101})
 			if err != nil {
+				fmt.Println(err)
 				os.Exit(1)
 			}
 

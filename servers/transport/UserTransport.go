@@ -2,6 +2,7 @@ package transport
 
 import (
 	"com.calvin.service/endpoint"
+	"com.calvin.service/utils"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,4 +23,17 @@ func DecodeUserRequest(ctx context.Context, r *http.Request) (interface{}, error
 func EncodeUserResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
+}
+
+func MyErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
+	contentType, body := "text/plain; charset=utf-8", []byte(err.Error())
+	w.Header().Set("content-type", contentType)
+	if myError, ok := err.(*utils.MyError); ok {
+		w.WriteHeader(myError.Code)
+		_, _ = w.Write(body)
+	} else {
+		w.WriteHeader(404)
+		_, _ = w.Write(body)
+	}
+
 }

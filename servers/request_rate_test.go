@@ -23,5 +23,5 @@ func TestRequestRate(t *testing.T) {
 		writer.Write([]byte("OK"))
 	})
 
-	http.ListenAndServe(":8111", MyLimit(mux))
+	_ = http.ListenAndServe(":8111", MyLimit(mux))
 }
