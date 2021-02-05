@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
 	"math/rand"
@@ -48,21 +47,25 @@ func main() {
 		}
 		// hystrix 设置Configure文件
 		hystrix.ConfigureCommand("get_product", configA)
-
-		err := hystrix.Do("get_product", func() error {
+		getProductChan := make(chan Product, 1)
+		errs := hystrix.Go("get_product", func() error {
 			product := GetProduct(1)
-			fmt.Println(product)
+			getProductChan <- *product
 			return nil
-		}, func(err error) error {
-			product, _ := RecProduct()
-			fmt.Println("========== 降级处理 ============")
-			fmt.Println(product)
-			return errors.New("my time out!!!")
+		}, func(e error) error {
+			product, err := RecProduct()
+			getProductChan <- product
+			return err
 		})
 
-		if err != nil {
-			fmt.Println("降级处理，发生错误了")
-			fmt.Println(err)
+		select {
+		case getProduct := <-getProductChan:
+
+			fmt.Println(getProduct)
+		case errors := <-errs:
+			fmt.Println("发生错误了")
+			fmt.Println(errors)
+
 		}
 	}
 
