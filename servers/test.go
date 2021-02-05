@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
 	"math/rand"
@@ -25,6 +26,14 @@ func GetProduct(id int) *Product {
 	}
 }
 
+func RecProduct() (Product, error) {
+	return Product{
+		ID:    999,
+		Name:  "推荐商品",
+		Price: 120,
+	}, nil
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -44,10 +53,15 @@ func main() {
 			product := GetProduct(1)
 			fmt.Println(product)
 			return nil
-		}, nil)
+		}, func(err error) error {
+			product, _ := RecProduct()
+			fmt.Println("========== 降级处理 ============")
+			fmt.Println(product)
+			return errors.New("my time out!!!")
+		})
 
 		if err != nil {
-			fmt.Println("发生错误了")
+			fmt.Println("降级处理，发生错误了")
 			fmt.Println(err)
 		}
 	}
